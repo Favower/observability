@@ -1,3 +1,20 @@
 package main
 
-func main() {}
+import (
+	"log"
+	"net/http"
+
+	"github.com/Favower/observability/cmd/server/handlers"
+	"github.com/Favower/observability/cmd/server/storage"
+)
+
+func main() {
+	storage := storage.NewMemStorage()
+
+	http.HandleFunc("/update/", handlers.UpdateHandler(storage))
+
+	log.Println("Starting server at :8080")
+	if err := http.ListenAndServe(":8080", nil); err != nil {
+		log.Fatalf("Server failed: %v", err)
+	}
+}
