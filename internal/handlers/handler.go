@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/Favower/observability/cmd/server/storage"
+	"github.com/Favower/observability/internal/storage"
 )
 
 func UpdateHandler(storage *storage.MemStorage) http.HandlerFunc {

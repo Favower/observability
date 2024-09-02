@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 	"runtime"
+	"math/rand"
 )
 
 // MetricSender - интерфейс для отправки метрик.
@@ -75,31 +76,32 @@ func (c *Collector) collectMetrics() map[string]float64 {
 
 	return map[string]float64{
 		"Alloc":        float64(memStats.Alloc),
-		"TotalAlloc":   float64(memStats.TotalAlloc),
-		"Sys":          float64(memStats.Sys),
-		"Lookups":      float64(memStats.Lookups),
-		"Mallocs":      float64(memStats.Mallocs),
+		"BuckHashSys":	float64(memStats.BuckHashSys),
 		"Frees":        float64(memStats.Frees),
+		"GCCPUFraction": memStats.GCCPUFraction,
+		"GCSys":        float64(memStats.GCSys),
 		"HeapAlloc":    float64(memStats.HeapAlloc),
-		"HeapSys":      float64(memStats.HeapSys),
 		"HeapIdle":     float64(memStats.HeapIdle),
 		"HeapInuse":    float64(memStats.HeapInuse),
-		"HeapReleased": float64(memStats.HeapReleased),
 		"HeapObjects":  float64(memStats.HeapObjects),
-		"StackInuse":   float64(memStats.StackInuse),
-		"StackSys":     float64(memStats.StackSys),
-		"MSpanInuse":   float64(memStats.MSpanInuse),
-		"MSpanSys":     float64(memStats.MSpanSys),
+		"HeapReleased": float64(memStats.HeapReleased),
+		"HeapSys":      float64(memStats.HeapSys),
+		"LastGC":       float64(memStats.LastGC),
+		"Lookups":      float64(memStats.Lookups),
 		"MCacheInuse":  float64(memStats.MCacheInuse),
 		"MCacheSys":    float64(memStats.MCacheSys),
-		"GCSys":        float64(memStats.GCSys),
-		"OtherSys":     float64(memStats.OtherSys),
+		"MSpanInuse":   float64(memStats.MSpanInuse),
+		"MSpanSys":     float64(memStats.MSpanSys),
 		"NextGC":       float64(memStats.NextGC),
-		"LastGC":       float64(memStats.LastGC),
-		"PauseTotalNs": float64(memStats.PauseTotalNs),
-		"NumGC":        float64(memStats.NumGC),
 		"NumForcedGC":  float64(memStats.NumForcedGC),
-		"GCCPUFraction": memStats.GCCPUFraction,
+		"NumGC":        float64(memStats.NumGC),
+		"OtherSys":     float64(memStats.OtherSys),
+		"PauseTotalNs": float64(memStats.PauseTotalNs),		
+		"StackInuse":   float64(memStats.StackInuse),
+		"StackSys":     float64(memStats.StackSys),
+		"Sys":          float64(memStats.Sys),
+		"TotalAlloc":   float64(memStats.TotalAlloc),
 		"PollCount":    float64(c.pollCount),
+		"RandomValue":	rand.Float64(),
 	}
 }

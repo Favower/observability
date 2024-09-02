@@ -5,7 +5,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/Favower/observability/cmd/server/storage"
+	"github.com/Favower/observability/internal/storage"
 )
 
 func TestUpdateHandler(t *testing.T) {
