@@ -4,8 +4,8 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/Favower/observability/cmd/server/handlers"
-	"github.com/Favower/observability/cmd/server/storage"
+	"github.com/Favower/observability/internal/handlers"
+	"github.com/Favower/observability/internal/storage"
 )
 
 func main() {
