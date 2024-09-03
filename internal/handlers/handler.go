@@ -4,9 +4,56 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
-
 	"github.com/Favower/observability/internal/storage"
+	"github.com/gin-gonic/gin"
 )
+
+// Хэндлер для получения значения метрики
+func GetMetricHandler(storage *storage.MemStorage) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		metricType := c.Param("type")
+		metricName := c.Param("name")
+
+		switch metricType {
+		case "gauge":
+			if value, ok := storage.GetGauge(metricName); ok {
+				c.String(http.StatusOK, strconv.FormatFloat(value, 'f', -1, 64))
+			} else {
+				c.String(http.StatusNotFound, "Metric not found")
+			}
+		case "counter":
+			if value, ok := storage.GetCounter(metricName); ok {
+				c.String(http.StatusOK, strconv.FormatInt(value, 10))
+			} else {
+				c.String(http.StatusNotFound, "Metric not found")
+			}
+		default:
+			c.String(http.StatusBadRequest, "Invalid metric type")
+		}
+	}
+}
+
+// Хэндлер для отображения всех метрик в HTML
+func GetAllMetricsHandler(storage *storage.MemStorage) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		storage.Mu.RLock()
+		defer storage.Mu.RUnlock()
+
+		html := "<html><body><h1>Metrics</h1><ul>"
+
+		for name, value := range storage.Gauges {
+			html += "<li>" + name + " (gauge): " + strconv.FormatFloat(value, 'f', -1, 64) + "</li>"
+		}
+
+		for name, value := range storage.Counters {
+			html += "<li>" + name + " (counter): " + strconv.FormatInt(value, 10) + "</li>"
+		}
+
+		html += "</ul></body></html>"
+
+		c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(html))
+	}
+}
 
 func UpdateHandler(storage *storage.MemStorage) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {

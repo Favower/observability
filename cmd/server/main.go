@@ -1,9 +1,8 @@
 package main
 
 import (
+	"github.com/gin-gonic/gin"
 	"log"
-	"net/http"
-
 	"github.com/Favower/observability/internal/handlers"
 	"github.com/Favower/observability/internal/storage"
 )
@@ -11,10 +10,16 @@ import (
 func main() {
 	storage := storage.NewMemStorage()
 
-	http.HandleFunc("/update/", handlers.UpdateHandler(storage))
+	r := gin.Default()
 
-	log.Println("Starting server at :8080")
-	if err := http.ListenAndServe(":8080", nil); err != nil {
+	// Маршрут для получения значения метрики
+	r.GET("/value/:type/:name", handlers.GetMetricHandler(storage))
+
+	// Маршрут для отображения всех метрик в HTML
+	r.GET("/", handlers.GetAllMetricsHandler(storage))
+
+	// Запуск сервера на порту 8080
+	if err := r.Run(":8080"); err != nil {
 		log.Fatalf("Server failed: %v", err)
 	}
 }
