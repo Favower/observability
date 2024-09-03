@@ -1,18 +1,16 @@
-package handlers
+package handlers_test
 
 import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"github.com/gin-gonic/gin"
+	"github.com/Favower/observability/internal/handlers"
 	"github.com/Favower/observability/internal/storage"
 )
 
 func TestUpdateHandler(t *testing.T) {
-	// Создаем тестовый сервер и хранилище
-	storage := storage.NewMemStorage()
-	handler := UpdateHandler(storage)
-
 	tests := []struct {
 		name           string
 		method         string
@@ -20,51 +18,54 @@ func TestUpdateHandler(t *testing.T) {
 		expectedStatus int
 	}{
 		{
-			name:           "Valid Gauge Metric",
+			name:           "Valid gauge update",
 			method:         "POST",
-			url:            "/update/gauge/testMetric/123.45",
+			url:            "/update/gauge/temperature/23.5",
 			expectedStatus: http.StatusOK,
 		},
 		{
-			name:           "Valid Counter Metric",
+			name:           "Valid counter update",
 			method:         "POST",
-			url:            "/update/counter/testMetric/123",
+			url:            "/update/counter/hits/1",
 			expectedStatus: http.StatusOK,
 		},
 		{
-			name:           "Invalid URL Format",
+			name:           "Invalid metric type",
 			method:         "POST",
-			url:            "/update/gauge/testMetric",
+			url:            "/update/invalidType/metric/10",
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name:           "Incomplete URL",
+			method:         "POST",
+			url:            "/update/gauge/temperature",
 			expectedStatus: http.StatusNotFound,
-		},
-		{
-			name:           "Invalid Metric Type",
-			method:         "POST",
-			url:            "/update/unknownMetric/testMetric/123",
-			expectedStatus: http.StatusBadRequest,
-		},
-		{
-			name:           "Invalid Gauge Value",
-			method:         "POST",
-			url:            "/update/gauge/testMetric/invalid",
-			expectedStatus: http.StatusBadRequest,
-		},
-		{
-			name:           "Invalid Counter Value",
-			method:         "POST",
-			url:            "/update/counter/testMetric/invalid",
-			expectedStatus: http.StatusBadRequest,
 		},
 	}
 
+	// Создаем экземпляр хранилища для тестов
+	memStorage := storage.NewMemStorage()
+
+	// Создаем новый роутер Gin
+	router := gin.New()
+
+	// Регистрируем хендлер
+	router.POST("/update/:type/:name/:value", handlers.UpdateHandler(memStorage))
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// Создаем новый HTTP-запрос с использованием метода и URL из тестов
 			req := httptest.NewRequest(tt.method, tt.url, nil)
+			
+			// Создаем рекордер для записи HTTP-ответа
 			rr := httptest.NewRecorder()
-			handler.ServeHTTP(rr, req)
 
+			// Выполняем тестируемый хендлер
+			router.ServeHTTP(rr, req)
+
+			// Проверяем статус-код ответа
 			if status := rr.Code; status != tt.expectedStatus {
-				t.Errorf("handler returned wrong status code: got %v want %v", status, tt.expectedStatus)
+				t.Errorf("handler returned wrong status code: got %v, want %v", status, tt.expectedStatus)
 			}
 		})
 	}

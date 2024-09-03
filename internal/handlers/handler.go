@@ -55,21 +55,22 @@ func GetAllMetricsHandler(storage *storage.MemStorage) gin.HandlerFunc {
 	}
 }
 
-func UpdateHandler(storage *storage.MemStorage) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+// UpdateHandler обрабатывает POST-запросы для обновления метрик
+func UpdateHandler(storage *storage.MemStorage) gin.HandlerFunc {
+	return func(c *gin.Context) {
 		// Извлечение информации из URL
-		path := strings.TrimPrefix(r.URL.Path, "/update/")
+		path := strings.TrimPrefix(c.Request.URL.Path, "/update/")
 		parts := strings.Split(path, "/")
 
 		if len(parts) != 3 {
-			http.Error(w, "Не найдено", http.StatusNotFound)
+			c.String(http.StatusNotFound, "Не найдено")
 			return
 		}
 
 		metricType, metricName, metricValue := parts[0], parts[1], parts[2]
 
 		if metricName == "" {
-			http.Error(w, "Не найдено", http.StatusNotFound)
+			c.String(http.StatusNotFound, "Не найдено")
 			return
 		}
 
@@ -78,7 +79,7 @@ func UpdateHandler(storage *storage.MemStorage) http.HandlerFunc {
 			// Преобразование значения в float64
 			value, err := strconv.ParseFloat(metricValue, 64)
 			if err != nil {
-				http.Error(w, "Неверный запрос", http.StatusBadRequest)
+				c.String(http.StatusBadRequest, "Неверный запрос")
 				return
 			}
 			// Обновление метрики типа Gauge, просто передаем значение value
@@ -87,18 +88,17 @@ func UpdateHandler(storage *storage.MemStorage) http.HandlerFunc {
 			// Преобразование значения в int64
 			value, err := strconv.ParseInt(metricValue, 10, 64)
 			if err != nil {
-				http.Error(w, "Неверный запрос", http.StatusBadRequest)
+				c.String(http.StatusBadRequest, "Неверный запрос")
 				return
 			}
 			// Обновление метрики типа Counter, просто передаем значение value
 			storage.UpdateCounter(metricName, value)
 		default:
-			http.Error(w, "Неверный запрос", http.StatusBadRequest)
+			c.String(http.StatusBadRequest, "Неверный запрос")
 			return
 		}
 
 		// Ответ при успешном обновлении метрики
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("OK"))
+		c.String(http.StatusOK, "OK")
 	}
 }

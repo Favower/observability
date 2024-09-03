@@ -18,6 +18,9 @@ func main() {
 	// Маршрут для отображения всех метрик в HTML
 	r.GET("/", handlers.GetAllMetricsHandler(storage))
 
+	// Маршрут для обновления метрик через POST-запрос
+	r.POST("/update/:type/:name/:value", handlers.UpdateHandler(storage))
+
 	// Запуск сервера на порту 8080
 	if err := r.Run(":8080"); err != nil {
 		log.Fatalf("Server failed: %v", err)
