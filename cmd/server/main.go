@@ -11,8 +11,14 @@ import (
 )
 
 func main() {
-	// Определение флага -a для указания адреса HTTP-сервера
-	address := flag.String("a", "localhost:8080", "адрес HTTP-сервера (по умолчанию localhost:8080)")
+	// Значение по умолчанию для адреса HTTP-сервера
+	defaultAddress := "localhost:8080"
+
+	// Чтение переменной окружения ADDRESS (если существует)
+	address := getEnv("ADDRESS", defaultAddress)
+
+	// Переопределение адреса флагом командной строки
+	flag.StringVar(&address, "a", address, "адрес HTTP-сервера (по умолчанию localhost:8080)")
 
 	// Парсинг флагов
 	flag.Parse()
@@ -35,8 +41,16 @@ func main() {
 	r.POST("/update/:type/:name/:value", handlers.UpdateHandler(storage))
 
 	// Запуск HTTP-сервера
-	log.Printf("Запуск сервера на %s\n", *address)
-	if err := r.Run(*address); err != nil {
+	log.Printf("Запуск сервера на %s\n", address)
+	if err := r.Run(address); err != nil {
 		log.Fatalf("Ошибка при запуске сервера: %v", err)
 	}
+}
+
+// getEnv возвращает значение переменной окружения или значение по умолчанию
+func getEnv(key, defaultValue string) string {
+	if value, exists := os.LookupEnv(key); exists {
+		return value
+	}
+	return defaultValue
 }
