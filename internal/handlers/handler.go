@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+
 	"github.com/Favower/observability/internal/storage"
 	"github.com/gin-gonic/gin"
 )

@@ -3,11 +3,12 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
+	"os"
+
 	"github.com/Favower/observability/internal/handlers"
 	"github.com/Favower/observability/internal/storage"
 	"github.com/gin-gonic/gin"
-	"log"
-	"os"
 )
 
 func main() {
@@ -38,7 +39,7 @@ func main() {
 	// Маршруты
 	r.GET("/value/:type/:name", handlers.GetMetricHandler(storage))
 	r.GET("/", handlers.GetAllMetricsHandler(storage))
-	r.POST("/update/:type/:name/:value", handlers.UpdateHandler(storage))
+	r.PUT("/update/:type/:name/:value", handlers.UpdateHandler(storage))
 
 	// Запуск HTTP-сервера
 	log.Printf("Запуск сервера на %s\n", address)
@@ -53,4 +54,4 @@ func getEnv(key, defaultValue string) string {
 		return value
 	}
 	return defaultValue
-}
+} 

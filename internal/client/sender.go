@@ -6,7 +6,7 @@ import (
 )
 
 type MetricSender interface {
-	SendMetric(metricType, name string, value float64)
+	SendMetric(metricType, name string, value float64) error
 }
 
 type Sender struct {
@@ -17,16 +17,20 @@ func NewSender(serverURL string) *Sender {
 	return &Sender{serverURL: serverURL}
 }
 
-func (s *Sender) SendMetric(metricType, name string, value float64) {
+func (s *Sender) SendMetric(metricType, name string, value float64) error {
+	// Формируем URL для отправки метрики
 	url := fmt.Sprintf("%s/update/%s/%s/%f", s.serverURL, metricType, name, value)
+
+	// Выполняем POST-запрос
 	resp, err := http.Post(url, "text/plain", nil)
 	if err != nil {
-		fmt.Printf("Failed to send metric %s: %v\n", name, err)
-		return
+		return fmt.Errorf("failed to send metric %s: %v", name, err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		fmt.Printf("Error response from server for %s: %s\n", name, resp.Status)
+		return fmt.Errorf("server error for %s: %s", name, resp.Status)
 	}
+	
+	return nil
 }

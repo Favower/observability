@@ -12,7 +12,27 @@ import (
 )
 
 func main() {
-	// Определение флагов для адреса сервера, интервала опроса метрик и интервала отправки
+	// Вызов новой функции для парсинга флагов и переменных окружения
+	address, pollInterval, reportInterval := parseFlags()
+
+	// Преобразуем интервалы в тип `time.Duration`
+	pollDuration := time.Duration(pollInterval) * time.Second
+	reportDuration := time.Duration(reportInterval) * time.Second
+
+	// Инициализация коллектора и отправителя метрик
+	collector := metrics.NewCollector()
+	sender := client.NewSender(fmt.Sprintf("http://%s", address))
+
+	// Запуск сбора и отправки метрик
+	go collector.CollectAndSendMetrics(sender, pollDuration, reportDuration)
+
+	// Бесконечный цикл, чтобы программа не завершалась
+	select {}
+}
+
+// parseFlags возвращает значения флагов и переменных окружения
+func parseFlags() (string, int, int) {
+	// Значения по умолчанию
 	defaultAddress := "localhost:8080"
 	defaultPollInterval := 2    // в секундах
 	defaultReportInterval := 10 // в секундах
@@ -36,19 +56,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Преобразуем интервалы в тип `time.Duration`
-	pollDuration := time.Duration(pollInterval) * time.Second
-	reportDuration := time.Duration(reportInterval) * time.Second
-
-	// Инициализация коллектора и отправителя метрик
-	collector := metrics.NewCollector()
-	sender := client.NewSender(fmt.Sprintf("http://%s", address))
-
-	// Запуск сбора и отправки метрик
-	go collector.CollectAndSendMetrics(sender, pollDuration, reportDuration)
-
-	// Бесконечный цикл, чтобы программа не завершалась
-	select {}
+	// Возвращаем обработанные значения
+	return address, pollInterval, reportInterval
 }
 
 // getEnv возвращает значение переменной окружения или значение по умолчанию
