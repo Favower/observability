@@ -3,11 +3,12 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
+	"os"
+
 	"github.com/Favower/observability/internal/handlers"
 	"github.com/Favower/observability/internal/storage"
 	"github.com/gin-gonic/gin"
-	"log"
-	"os"
 )
 
 func main() {
@@ -53,4 +54,4 @@ func getEnv(key, defaultValue string) string {
 		return value
 	}
 	return defaultValue
-}
+} 

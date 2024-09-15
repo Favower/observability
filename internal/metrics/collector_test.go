@@ -21,11 +21,12 @@ func NewMockMetricSender() *MockMetricSender {
 	}
 }
 
-func (m *MockMetricSender) SendMetric(metricType, name string, value float64) {
+func (m *MockMetricSender) SendMetric(metricType, name string, value float64) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
 	m.ReceivedMetrics[name] = value
+	return nil
 }
 
 func TestCollector_CollectAndSendMetrics(t *testing.T) {

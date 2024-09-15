@@ -4,8 +4,15 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+
 	"github.com/Favower/observability/internal/storage"
 	"github.com/gin-gonic/gin"
+)
+
+// Определение констант для типов метрик
+const (
+	MetricTypeGauge   = "gauge"
+	MetricTypeCounter = "counter"
 )
 
 // Хэндлер для получения значения метрики
@@ -15,13 +22,13 @@ func GetMetricHandler(storage *storage.MemStorage) gin.HandlerFunc {
 		metricName := c.Param("name")
 
 		switch metricType {
-		case "gauge":
+		case MetricTypeGauge:
 			if value, ok := storage.GetGauge(metricName); ok {
 				c.String(http.StatusOK, strconv.FormatFloat(value, 'f', -1, 64))
 			} else {
 				c.String(http.StatusNotFound, "Metric not found")
 			}
-		case "counter":
+		case MetricTypeCounter:
 			if value, ok := storage.GetCounter(metricName); ok {
 				c.String(http.StatusOK, strconv.FormatInt(value, 10))
 			} else {
@@ -42,11 +49,11 @@ func GetAllMetricsHandler(storage *storage.MemStorage) gin.HandlerFunc {
 		html := "<html><body><h1>Metrics</h1><ul>"
 
 		for name, value := range storage.Gauges {
-			html += "<li>" + name + " (gauge): " + strconv.FormatFloat(value, 'f', -1, 64) + "</li>"
+			html += "<li>" + name + " (" + MetricTypeGauge + "): " + strconv.FormatFloat(value, 'f', -1, 64) + "</li>"
 		}
 
 		for name, value := range storage.Counters {
-			html += "<li>" + name + " (counter): " + strconv.FormatInt(value, 10) + "</li>"
+			html += "<li>" + name + " (" + MetricTypeCounter + "): " + strconv.FormatInt(value, 10) + "</li>"
 		}
 
 		html += "</ul></body></html>"
@@ -75,7 +82,7 @@ func UpdateHandler(storage *storage.MemStorage) gin.HandlerFunc {
 		}
 
 		switch metricType {
-		case "gauge":
+		case MetricTypeGauge:
 			// Преобразование значения в float64
 			value, err := strconv.ParseFloat(metricValue, 64)
 			if err != nil {
@@ -84,7 +91,7 @@ func UpdateHandler(storage *storage.MemStorage) gin.HandlerFunc {
 			}
 			// Обновление метрики типа Gauge, просто передаем значение value
 			storage.UpdateGauge(metricName, value)
-		case "counter":
+		case MetricTypeCounter:
 			// Преобразование значения в int64
 			value, err := strconv.ParseInt(metricValue, 10, 64)
 			if err != nil {

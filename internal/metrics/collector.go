@@ -10,7 +10,7 @@ import (
 
 // MetricSender - интерфейс для отправки метрик.
 type MetricSender interface {
-	SendMetric(metricType, metricName string, value float64)
+	SendMetric(metricType, metricName string, value float64) error
 }
 
 // HTTPMetricSender - реализация интерфейса MetricSender, отправляющая метрики через HTTP.
@@ -57,16 +57,25 @@ func (c *Collector) CollectAndSendMetrics(sender MetricSender, pollInterval, rep
 	defer ticker.Stop()
 
 	for range ticker.C {
+		// Сбор метрик
 		metrics := c.collectMetrics()
+
+		// Отправка каждой метрики
 		for name, value := range metrics {
 			metricType := "gauge"
 			if name == "PollCount" {
 				metricType = "counter"
 			}
-			sender.SendMetric(metricType, name, value)
+
+			// Попытка отправки метрики и обработка возможной ошибки
+			if err := sender.SendMetric(metricType, name, value); err != nil {
+				// Логирование ошибки отправки метрики
+				fmt.Printf("Ошибка при отправке метрики %s (%s): %v\n", name, metricType, err)
+			}
 		}
 	}
 }
+
 
 func (c *Collector) collectMetrics() map[string]float64 {
 	var memStats runtime.MemStats
