@@ -40,6 +40,7 @@ func main() {
 	r.GET("/value/:type/:name", handlers.GetMetricHandler(storage))
 	r.GET("/", handlers.GetAllMetricsHandler(storage))
 	r.PUT("/update/:type/:name/:value", handlers.UpdateHandler(storage))
+	r.POST("/update/:type/:name/:value", handlers.UpdateHandler(storage))
 
 	// Запуск HTTP-сервера
 	log.Printf("Запуск сервера на %s\n", address)
