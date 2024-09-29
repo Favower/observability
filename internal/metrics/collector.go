@@ -43,24 +43,24 @@ func (s *HTTPMetricSender) SendMetric(metricType, metricName string, value float
 
     reqBodyJSON, err := json.Marshal(reqBody)
     if err != nil {
-        return fmt.Errorf("Ошибка сериализации метрики: %v", err)
+        return fmt.Errorf("ошибка сериализации метрики: %v", err)
     }
 
     req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(reqBodyJSON))
     if err != nil {
-        return fmt.Errorf("Ошибка создания запроса: %v", err)
+        return fmt.Errorf("ошибка создания запроса: %v", err)
     }
 
     req.Header.Set("Content-Type", "application/json")
     client := &http.Client{}
     resp, err := client.Do(req)
     if err != nil {
-        return fmt.Errorf("Ошибка отправки метрики: %v", err)
+        return fmt.Errorf("ошибка отправки метрики: %v", err)
     }
     defer resp.Body.Close()
 
     if resp.StatusCode != http.StatusOK {
-        return fmt.Errorf("Сервер вернул некорректный статус: %v", resp.Status)
+        return fmt.Errorf("сервер вернул некорректный статус: %v", resp.Status)
     }
     return nil
 }
@@ -92,7 +92,7 @@ func (c *Collector) CollectAndSendMetrics(sender MetricSender, pollInterval, rep
 			// Попытка отправки метрики и обработка возможной ошибки
 			if err := sender.SendMetric(metricType, name, value); err != nil {
 				// Логирование ошибки отправки метрики
-				fmt.Printf("Ошибка при отправке метрики %s (%s): %v\n", name, metricType, err)
+				fmt.Printf("ошибка при отправке метрики %s (%s): %v\n", name, metricType, err)
 			}
 		}
 	}
