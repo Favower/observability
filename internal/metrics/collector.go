@@ -1,13 +1,13 @@
 package metrics
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
-	"math/rand"
 	"net/http"
-	"runtime"
 	"time"
+	"runtime"
+	"math/rand"
+	"encoding/json"
+	"bytes"
 )
 
 // MetricSender - интерфейс для отправки метрик.
@@ -15,54 +15,56 @@ type MetricSender interface {
 	SendMetric(metricType, metricName string, value float64) error
 }
 
-// Metric - структура для представления метрики в формате JSON.
-type Metric struct {
-	MetricType string  `json:"metric_type"`
-	MetricName string  `json:"metric_name"`
-	Value      float64 `json:"value"`
-}
-
 // HTTPMetricSender - реализация интерфейса MetricSender, отправляющая метрики через HTTP.
 type HTTPMetricSender struct {
 	ServerAddress string
 }
+
+type Metrics struct {
+	ID    string   `json:"id"`              // имя метрики
+	MType string   `json:"type"`            // параметр, принимающий значение gauge или counter
+	Delta *int64   `json:"delta,omitempty"` // значение метрики в случае передачи counter
+	Value *float64 `json:"value,omitempty"` // значение метрики в случае передачи gauge
+ }
 
 func NewHTTPMetricSender(serverAddress string) *HTTPMetricSender {
 	return &HTTPMetricSender{ServerAddress: serverAddress}
 }
 
 func (s *HTTPMetricSender) SendMetric(metricType, metricName string, value float64) error {
-	metric := Metric{
-		MetricType: metricType,
-		MetricName: metricName,
-		Value:      value,
-	}
+    url := fmt.Sprintf("http://%s/value/", s.ServerAddress)
+    reqBody := Metrics{ID: metricName, MType: metricType}
+    if metricType == "gauge" {
+        reqBody.Value = &value
+    } else if metricType == "counter" {
+        reqBody.Delta = new(int64)
+        *reqBody.Delta = int64(value)
+    }
 
-	data, err := json.Marshal(metric)
-	if err != nil {
-		return fmt.Errorf("ошибка сериализации метрики в JSON: %v", err)
-	}
+    reqBodyJSON, err := json.Marshal(reqBody)
+    if err != nil {
+        return fmt.Errorf("Ошибка сериализации метрики: %v", err)
+    }
 
-	url := fmt.Sprintf("http://%s/update/", s.ServerAddress)
-	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(data))
-	if err != nil {
-		return fmt.Errorf("ошибка создания запроса: %v", err)
-	}
+    req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(reqBodyJSON))
+    if err != nil {
+        return fmt.Errorf("Ошибка создания запроса: %v", err)
+    }
 
-	req.Header.Set("Content-Type", "application/json")
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return fmt.Errorf("ошибка отправки метрики: %v", err)
-	}
-	defer resp.Body.Close()
+    req.Header.Set("Content-Type", "application/json")
+    client := &http.Client{}
+    resp, err := client.Do(req)
+    if err != nil {
+        return fmt.Errorf("Ошибка отправки метрики: %v", err)
+    }
+    defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("сервер вернул некорректный статус: %v", resp.Status)
-	}
-
-	return nil
+    if resp.StatusCode != http.StatusOK {
+        return fmt.Errorf("Сервер вернул некорректный статус: %v", resp.Status)
+    }
+    return nil
 }
+
 
 type Collector struct {
 	pollCount int64
@@ -96,6 +98,7 @@ func (c *Collector) CollectAndSendMetrics(sender MetricSender, pollInterval, rep
 	}
 }
 
+
 func (c *Collector) collectMetrics() map[string]float64 {
 	var memStats runtime.MemStats
 	runtime.ReadMemStats(&memStats)
@@ -104,7 +107,7 @@ func (c *Collector) collectMetrics() map[string]float64 {
 
 	return map[string]float64{
 		"Alloc":        float64(memStats.Alloc),
-		"BuckHashSys":  float64(memStats.BuckHashSys),
+		"BuckHashSys":	float64(memStats.BuckHashSys),
 		"Frees":        float64(memStats.Frees),
 		"GCCPUFraction": memStats.GCCPUFraction,
 		"GCSys":        float64(memStats.GCSys),
@@ -130,6 +133,6 @@ func (c *Collector) collectMetrics() map[string]float64 {
 		"Sys":          float64(memStats.Sys),
 		"TotalAlloc":   float64(memStats.TotalAlloc),
 		"PollCount":    float64(c.pollCount),
-		"RandomValue":  rand.Float64(),
+		"RandomValue":	rand.Float64(),
 	}
 }
