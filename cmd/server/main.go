@@ -13,9 +13,12 @@ import (
 	"go.uber.org/zap"
 )
 
-func main() {
+const (
 	// Значение по умолчанию для адреса HTTP-сервера
-	defaultAddress := "localhost:8080"
+	defaultAddress = "localhost:8080"
+)
+
+func main() {
 
 	// Чтение переменной окружения ADDRESS (если существует)
 	address := getEnv("ADDRESS", defaultAddress)
@@ -40,9 +43,10 @@ func main() {
 
 	// Маршруты
 	r.GET("/value/:type/:name", handlers.GetMetricHandler(storage))
-	r.GET("/", handlers.GetAllMetricsHandler(storage))
 	r.PUT("/update/:type/:name/:value", handlers.UpdateHandler(storage))
-	r.POST("/update/:type/:name/:value", handlers.UpdateHandler(storage))
+	r.GET("/", handlers.GetAllMetricsHandler(storage))
+	r.POST("/update/", handlers.JsonUpdateMetricHandler(storage))
+	r.POST("/value/", handlers.JsonGetMetricHandler(storage))
 
 	// Запуск HTTP-сервера
 	log.Printf("Запуск сервера на %s\n", address)
