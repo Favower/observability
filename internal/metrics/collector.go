@@ -1,16 +1,25 @@
 package metrics
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
-	"net/http"
-	"time"
-	"runtime"
 	"math/rand"
+	"net/http"
+	"runtime"
+	"time"
 )
 
 // MetricSender - интерфейс для отправки метрик.
 type MetricSender interface {
 	SendMetric(metricType, metricName string, value float64) error
+}
+
+// Metric - структура для представления метрики в формате JSON.
+type Metric struct {
+	MetricType string  `json:"metric_type"`
+	MetricName string  `json:"metric_name"`
+	Value      float64 `json:"value"`
 }
 
 // HTTPMetricSender - реализация интерфейса MetricSender, отправляющая метрики через HTTP.
@@ -22,26 +31,37 @@ func NewHTTPMetricSender(serverAddress string) *HTTPMetricSender {
 	return &HTTPMetricSender{ServerAddress: serverAddress}
 }
 
-func (s *HTTPMetricSender) SendMetric(metricType, metricName string, value float64) {
-	url := fmt.Sprintf("http://%s/update/%s/%s/%v", s.ServerAddress, metricType, metricName, value)
-	req, err := http.NewRequest(http.MethodPost, url, nil)
-	if err != nil {
-		fmt.Printf("Ошибка создания запроса: %v\n", err)
-		return
+func (s *HTTPMetricSender) SendMetric(metricType, metricName string, value float64) error {
+	metric := Metric{
+		MetricType: metricType,
+		MetricName: metricName,
+		Value:      value,
 	}
 
-	req.Header.Set("Content-Type", "text/plain")
+	data, err := json.Marshal(metric)
+	if err != nil {
+		return fmt.Errorf("ошибка сериализации метрики в JSON: %v", err)
+	}
+
+	url := fmt.Sprintf("http://%s/update/", s.ServerAddress)
+	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(data))
+	if err != nil {
+		return fmt.Errorf("ошибка создания запроса: %v", err)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		fmt.Printf("Ошибка отправки метрики: %v\n", err)
-		return
+		return fmt.Errorf("ошибка отправки метрики: %v", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		fmt.Printf("Сервер вернул некорректный статус: %v\n", resp.Status)
+		return fmt.Errorf("сервер вернул некорректный статус: %v", resp.Status)
 	}
+
+	return nil
 }
 
 type Collector struct {
@@ -76,7 +96,6 @@ func (c *Collector) CollectAndSendMetrics(sender MetricSender, pollInterval, rep
 	}
 }
 
-
 func (c *Collector) collectMetrics() map[string]float64 {
 	var memStats runtime.MemStats
 	runtime.ReadMemStats(&memStats)
@@ -85,7 +104,7 @@ func (c *Collector) collectMetrics() map[string]float64 {
 
 	return map[string]float64{
 		"Alloc":        float64(memStats.Alloc),
-		"BuckHashSys":	float64(memStats.BuckHashSys),
+		"BuckHashSys":  float64(memStats.BuckHashSys),
 		"Frees":        float64(memStats.Frees),
 		"GCCPUFraction": memStats.GCCPUFraction,
 		"GCSys":        float64(memStats.GCSys),
@@ -111,6 +130,6 @@ func (c *Collector) collectMetrics() map[string]float64 {
 		"Sys":          float64(memStats.Sys),
 		"TotalAlloc":   float64(memStats.TotalAlloc),
 		"PollCount":    float64(c.pollCount),
-		"RandomValue":	rand.Float64(),
+		"RandomValue":  rand.Float64(),
 	}
 }

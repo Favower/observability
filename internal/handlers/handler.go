@@ -155,7 +155,7 @@ func JSONGetMetricHandler(storage *storage.MemStorage) gin.HandlerFunc {
 
 		// Получение значения метрики в зависимости от типа
 		switch metric.MType {
-		case "gauge":
+		case MetricTypeGauge:
 			if value, ok := storage.GetGauge(metric.ID); ok {
 				metric.Value = &value // Присваиваем значение в поле Value
 				metric.Delta = nil    // Убираем Delta, так как это не применимо для gauge
@@ -163,7 +163,7 @@ func JSONGetMetricHandler(storage *storage.MemStorage) gin.HandlerFunc {
 				c.JSON(http.StatusNotFound, gin.H{"error": "Metric not found"})
 				return
 			}
-		case "counter":
+		case MetricTypeCounter:
 			if value, ok := storage.GetCounter(metric.ID); ok {
 				metric.Value = nil    // Убираем Value, так как это не применимо для counter
 				metric.Delta = &value // Присваиваем значение в поле Delta
