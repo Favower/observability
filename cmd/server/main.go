@@ -43,10 +43,10 @@ func main() {
 
 	// Маршруты
 	r.GET("/value/:type/:name", handlers.GetMetricHandler(storage))
-	r.PUT("/update/:type/:name/:value", handlers.UpdateHandler(storage))
+	r.POST("/update/:type/:name/:value", handlers.UpdateHandler(storage))
 	r.GET("/", handlers.GetAllMetricsHandler(storage))
-	r.POST("/update/", handlers.JsonUpdateMetricHandler(storage))
-	r.POST("/value/", handlers.JsonGetMetricHandler(storage))
+	r.POST("/update/", handlers.JSONUpdateMetricHandler(storage))
+	r.POST("/value/", handlers.JSONGetMetricHandler(storage))
 
 	// Запуск HTTP-сервера
 	log.Printf("Запуск сервера на %s\n", address)

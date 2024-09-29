@@ -105,10 +105,10 @@ func UpdateHandler(storage *storage.MemStorage) gin.HandlerFunc {
 	}
 }
 
-var metric storage.MetricsForJson
+var metric storage.MetricsForJSON
 
 // UpdateMetricHandler принимает метрики в формате JSON и обновляет их
-func JsonUpdateMetricHandler(storage *storage.MemStorage) gin.HandlerFunc {
+func JSONUpdateMetricHandler(storage *storage.MemStorage) gin.HandlerFunc {
 	return func(c *gin.Context) {
 
 		// Чтение и парсинг JSON
@@ -144,7 +144,7 @@ func JsonUpdateMetricHandler(storage *storage.MemStorage) gin.HandlerFunc {
 }
 
 // JsonGetMetricHandler принимает запросы на получение метрик в формате JSON и возвращает их значения
-func JsonGetMetricHandler(storage *storage.MemStorage) gin.HandlerFunc {
+func JSONGetMetricHandler(storage *storage.MemStorage) gin.HandlerFunc {
 	return func(c *gin.Context) {
 
 		// Чтение и парсинг JSON
