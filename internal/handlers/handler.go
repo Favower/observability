@@ -21,6 +21,7 @@ func JSONMetricValueHandler(c *gin.Context) {
 	// Парсинг JSON из запроса
 	if err := c.ShouldBindJSON(&metric); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+		return
 	}
 
 	// Проверка типа метрики
