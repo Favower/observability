@@ -3,7 +3,6 @@ package handlers
 import (
 	"net/http"
 	"strconv"
-	"strings"
 
 	"github.com/Favower/observability/internal/storage"
 	"github.com/gin-gonic/gin"
@@ -14,6 +13,51 @@ const (
 	MetricTypeGauge   = "gauge"
 	MetricTypeCounter = "counter"
 )
+
+var metric storage.Metrics
+
+// Handler для приема метрик в формате JSON
+func JSONMetricUpdateHandler(c *gin.Context) {
+	// Парсинг JSON из запроса
+	if err := c.ShouldBindJSON(&metric); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+		return
+	}
+
+	// Проверка типа метрики
+	switch metric.MType {
+	case MetricTypeGauge:
+		if metric.Value == nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error":"Missing value for gauge metric"})
+			return
+		}
+
+		c.Writer.Header().Set("Content-Type", "application/json")
+
+		c.JSON(http.StatusOK, gin.H{
+			"message": "Recived gauge metric",
+			"ID": metric.ID,
+			"Value": *metric.Value,
+		})
+
+	case MetricTypeCounter:
+		if metric.Delta == nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Missing delta for counter metric"})
+			return
+		}
+
+		c.Writer.Header().Set("Content-Type", "application/json")
+
+		c.JSON(http.StatusOK, gin.H{
+			"message": "Recived counter metric",
+			"ID": metric.ID,
+			"Delta": *metric.Delta,
+		})
+
+	default:
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid metric type"})
+	}
+}
 
 // Хэндлер для получения значения метрики
 func GetMetricHandler(storage *storage.MemStorage) gin.HandlerFunc {
@@ -62,25 +106,20 @@ func GetAllMetricsHandler(storage *storage.MemStorage) gin.HandlerFunc {
 	}
 }
 
-// UpdateHandler обрабатывает POST-запросы для обновления метрик
 func UpdateHandler(storage *storage.MemStorage) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// Извлечение информации из URL
-		path := strings.TrimPrefix(c.Request.URL.Path, "/update/")
-		parts := strings.Split(path, "/")
+		// Получение параметров из URL
+		metricType := c.Param("type")
+		metricName := c.Param("name")
+		metricValue := c.Param("value")
 
-		if len(parts) != 3 {
-			c.String(http.StatusNotFound, "Не найдено")
-			return
-		}
-
-		metricType, metricName, metricValue := parts[0], parts[1], parts[2]
-
+		// Проверка, что имя метрики не пустое
 		if metricName == "" {
 			c.String(http.StatusNotFound, "Не найдено")
 			return
 		}
 
+		// Обработка разных типов метрик
 		switch metricType {
 		case MetricTypeGauge:
 			// Преобразование значения в float64
@@ -89,7 +128,7 @@ func UpdateHandler(storage *storage.MemStorage) gin.HandlerFunc {
 				c.String(http.StatusBadRequest, "Неверный запрос")
 				return
 			}
-			// Обновление метрики типа Gauge, просто передаем значение value
+			// Обновление метрики типа Gauge
 			storage.UpdateGauge(metricName, value)
 		case MetricTypeCounter:
 			// Преобразование значения в int64
@@ -98,14 +137,14 @@ func UpdateHandler(storage *storage.MemStorage) gin.HandlerFunc {
 				c.String(http.StatusBadRequest, "Неверный запрос")
 				return
 			}
-			// Обновление метрики типа Counter, просто передаем значение value
+			// Обновление метрики типа Counter
 			storage.UpdateCounter(metricName, value)
 		default:
-			c.String(http.StatusBadRequest, "Неверный запрос")
+			c.String(http.StatusBadRequest, "Неверный тип метрики")
 			return
 		}
 
-		// Ответ при успешном обновлении метрики
+		// Успешный ответ
 		c.String(http.StatusOK, "OK")
 	}
 }
