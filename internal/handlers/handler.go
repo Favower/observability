@@ -14,6 +14,50 @@ const (
 	MetricTypeCounter = "counter"
 )
 
+var metric storage.Metrics
+
+// Handler для приема метрик в формате JSON
+func JSONMetricValueHandler(c *gin.Context) {
+	// Парсинг JSON из запроса
+	if err := c.ShouldBindJSON(&metric); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+	}
+
+	// Проверка типа метрики
+	switch metric.MType {
+	case MetricTypeGauge:
+		if metric.Value == nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error":"Missing value for gauge metric"})
+			return
+		}
+
+		c.Writer.Header().Set("Content-Type", "application/json")
+
+		c.JSON(http.StatusOK, gin.H{
+			"message": "Recived gauge metric",
+			"ID": metric.ID,
+			"Value": *metric.Value,
+		})
+
+	case MetricTypeCounter:
+		if metric.Delta == nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Missing delta for counter metric"})
+			return
+		}
+
+		c.Writer.Header().Set("Content-Type", "application/json")
+
+		c.JSON(http.StatusOK, gin.H{
+			"message": "Recived counter metric",
+			"ID": metric.ID,
+			"Delta": *metric.Delta,
+		})
+
+	default:
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid metric type"})
+	}
+}
+
 // Хэндлер для получения значения метрики
 func GetMetricHandler(storage *storage.MemStorage) gin.HandlerFunc {
 	return func(c *gin.Context) {

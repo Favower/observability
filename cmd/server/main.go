@@ -39,10 +39,10 @@ func main() {
 	r := gin.Default()
 
 	// Маршруты
-	r.GET("/value/:type/:name", handlers.GetMetricHandler(storage))
 	r.GET("/", handlers.GetAllMetricsHandler(storage))
-	r.PUT("/update/:type/:name/:value", handlers.UpdateHandler(storage))
+	r.GET("/value/:type/:name", handlers.GetMetricHandler(storage))
 	r.POST("/update/:type/:name/:value", handlers.UpdateHandler(storage))
+	r.POST("/value/", handlers.JSONMetricValueHandler)
 
 	// Запуск HTTP-сервера
 	log.Printf("Запуск сервера на %s\n", address)
