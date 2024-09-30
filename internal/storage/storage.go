@@ -18,6 +18,10 @@ type Metrics struct {
 	Value *float64 `json:"value,omitempty"` // значение метрики в случае передачи gauge
  }
 
+ func NewJSONMetric() *Metrics {
+	return &Metrics{}
+}
+
 // NewMemStorage возвращает новый экземпляр MemStorage
 func NewMemStorage() *MemStorage {
 	return &MemStorage{

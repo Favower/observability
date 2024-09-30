@@ -17,7 +17,7 @@ const (
 var metric storage.Metrics
 
 // Handler для приема метрик в формате JSON
-func JSONMetricValueHandler(c *gin.Context) {
+func JSONMetricUpdateHandler(c *gin.Context) {
 	// Парсинг JSON из запроса
 	if err := c.ShouldBindJSON(&metric); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
